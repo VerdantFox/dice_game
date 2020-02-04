@@ -19,6 +19,27 @@ function timeout (ms) {
     return new Promise(res => setTimeout(res,ms));
 }
 
+class state {
+    constructor (diceArray, playerArr) {
+        this.allDiceArr = diceArray;
+        this.selectedDiceArr = [];
+        this.oldDiceArr = [];
+        this.prevScore = 0;
+        this.selectedScore = 0;
+        this.totalScore = 0;
+        this.playerArr = playerArr;
+        this.currentPlayer = 0;
+    };
+};
+
+class player {
+    constructor (index) {
+        this.name = `Player ${index + 1}`;
+        this.abbreviation = `P${index + 1}`;
+        this.score = 0;
+    };
+};
+
 class dieClass {
     constructor (position) {
         this.position = position;
@@ -27,33 +48,34 @@ class dieClass {
         this.held = false;
         this.selected = false;
         this.locked = false;
-    }
+    };
+    
 
     async roll() {
         let roll;
         const rollTime = Math.floor(Math.random() * 4) + 16;
         this.locked = true;
         for (let rollCount = 0; rollCount < rollTime;  rollCount++) {
-            await timeout(7 * rollCount)
+            // wait for an increasing amount of time
+            await timeout(7 * rollCount);
+
             // 1. Random number
             roll = Math.floor(Math.random() * 6) + 1;
 
             //2. Display the result
             this.dom.style.display = 'block';
             this.dom.src = 'dice-' + roll + '.png';
-        }
+        };
         this.value = roll;
         this.locked = false;
     };
 
     hold() {
-        console.log("HOLDING!")
         this.held = true;
         this.dom.classList.add('die-hold')
     }
 
     unhold() {
-        console.log("UNHOLDING!")
         this.held = false;
         this.dom.classList.remove('die-hold')
     }
@@ -65,9 +87,11 @@ for (let position = 1; position <= 6; position++) {
     // create on click event listener for die object
     die.dom.addEventListener('click', function() {
         if (die.held) {
-            die.unhold()
+            die.unhold();
+            scoreDice(dieArr, true);
         } else {
-            die.hold()
+            die.hold();
+            scoreDice(dieArr, true);
         }
     });
     // push die object to the dieArr array
@@ -75,7 +99,6 @@ for (let position = 1; position <= 6; position++) {
 };
 
 btnDOM.addEventListener('click', function() {
-    console.log("Roll!")
     dieArr.forEach( (die) => {
         if (die.held === false) {
             die.roll()
@@ -89,6 +112,12 @@ function getMapKeyByValue(map, searchValue) {
         return key;
     }
   }
+
+function setMapBoolean(map, boolean) {
+    for (let key of map.keys()) {
+        map.set(key, boolean);
+    };
+};
 
 function scoreDice(diceArray, checkForHeld) {
     let score = 0;
@@ -130,7 +159,6 @@ function scoreDice(diceArray, checkForHeld) {
 
     // all dice are unused until scored
     let usedDiceMap = new Map();
-    let allDiceUsed = false;
     for (let [key, value] of rollFreqMap.entries()) {
         if (value !== 0) {
             usedDiceMap.set(key, false)
@@ -141,11 +169,13 @@ function scoreDice(diceArray, checkForHeld) {
     if (freqFreqVals[1] === 3) {
         score += 600;
         allDiceUsed = true;
+        setMapBoolean(usedDiceMap, true);
     }
     // large straight
     if (freqFreqVals[0] === 6) {
         score += 1500;
         allDiceUsed = true;
+        setMapBoolean(usedDiceMap, true);
     }
     // 3, 4, 5, 6 of a kind
     for (let [key, value] of rollFreqMap.entries()) {
@@ -181,13 +211,8 @@ function scoreDice(diceArray, checkForHeld) {
     console.log(`score=${score}`);
 
     let anyUsable = false
-    for (let [key, value] of usedDiceMap.entries()) {
-        if (value) {
-            console.log(`key=${key}, value=${value}`)
-            anyUsable = true
-        } else {
-            console.log(`${key} was unusable!`)
-        }
+    for (let value of usedDiceMap.values()) {
+        if (value) {anyUsable = true}
     }
     console.log(`anyUsable=${anyUsable}`)
 }
