@@ -22,9 +22,18 @@ body {
     color: #555;
 }
 
+table {
+    border-collapse: separate;
+    border-spacing: 20px 0;
+    text-align: center;
+  }
+  
+  td {
+    padding: 10px 0;
+  }
+
 
 /**********************************************
-*** PLAYERS
 **********************************************/
 button {
     position: absolute;
@@ -60,9 +69,18 @@ i {
     transition: margin 0.3s;
 }
 
-.btn-new { top: 60%;}
-.btn-roll { top: 70%;}
-.btn-hold { top: 80%;}
+#btn-new-game { top: 50%; }
+#btn-roll { top: 55%; }
+#btn-hold { top: 60%; }
+.score {
+    font-size: 24px;
+    font-weight: 600;
+    padding: 20px;
+    transform: translateX(-50%);
+    top: 65%;
+    left: 50%;
+    position: absolute;
+}
 
 .dice {
     border: 1px solid #000000;
@@ -73,7 +91,7 @@ i {
 }
 
 #dice1 {
-    left: 35%;
+    left: 42%;
     top: 20%;
 }
 #dice2 {
@@ -81,25 +99,54 @@ i {
     top: 20%;
 }
 #dice3 {
-    left: 65%;
+    left: 58%;
     top: 20%;
 }
 #dice4 {
-    left: 35%;
-    top: 40%;
+    left: 42%;
+    top: 33%;
 }
 #dice5 {
     left: 50%;
-    top: 40%;
+    top: 33%;
 }
 #dice6 {
-    left: 65%;
-    top: 40%;
+    left: 58%;
+    top: 33%;
 }
 
-.die-hold {
+.die-select {
     border: 2px dashed dodgerblue;
 }
 
-.winner { background-color: #f7f7f7; }
-.winner .player-name { font-weight: 300; color: #EB4D4D; }
+.player {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    width: 300px;
+    height: 100px;
+    background-color: greenyellow;
+    border: 1px solid maroon;
+    box-sizing: border-box;
+}
+
+#player1 {
+    top: 10%;
+}
+
+#player2 {
+    top: 25%;
+}
+
+#player3 {
+    top: 40%;
+}
+
+#player4 {
+    top: 55%;
+}
+    
+
+

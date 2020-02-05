@@ -10,11 +10,48 @@
     </head>
 
     <body>
-        <div class="wrapper clearfix">
-            
-            <button class="btn-new"><i class="ion-ios-plus-outline"></i>New game</button>
-            <button class="btn-roll"><i class="ion-ios-loop"></i>Roll dice</button>
-            <button class="btn-hold" id="evaluate"><i class="ion-ios-download-outline"></i>Evaluate</button>
+        <div class="players-div">
+            <div class="player" id="player1">
+                <h1 id="player1-name">Player 1</h1>
+                <h2 id="player1-score">Score: 450</h2>
+            </div>
+            <div class="player" id="player2">
+                <h1 id="player2-name">Player 2</h1>
+                <h2 id="player2-score">Score: 1250</h2>
+            </div>
+            <div class="player" id="player3">
+                <h1 id="player3-name">Player 3</h1>
+                <h2 id="player3-score">Score: 0</h2>
+            </div>
+            <div class="player" id="player4">
+                <h1 id="player4-name">Player 4</h1>
+                <h2 id="player4-score">Score: 750</h2>
+            </div>
+        </div>
+        <div class="gameplay-div">
+            <button id="btn-new-game"><i class="ion-ios-plus-outline"></i>New game</button>
+            <button id="btn-roll"><i class="ion-ios-loop"></i>Roll dice</button>
+            <button id="btn-hold"><i class="ion-ios-download-outline"></i>Hold</button>
+            <div class="score">
+                <table >
+                    <tbody">
+                        <tr>
+                            <td>Round so far</td>
+                            <td>+</td>
+                            <td>Selected</td>
+                            <td>=</td>
+                            <td>Round Total</td>
+                        </tr>
+                        <tr>
+                            <td id="prev-score">1450</td>
+                            <td>+</td>
+                            <td id="selected-score">550</td>
+                            <td>=</td>
+                            <td id="round-total">2000</td>
+                        </tr>
+                    </tbody">
+                </table>
+            </div>
             
             <img src="dice-1.png" alt="Dice" class="dice" id="dice1">
             <img src="dice-2.png" alt="Dice" class="dice" id="dice2">
@@ -22,8 +59,6 @@
             <img src="dice-4.png" alt="Dice" class="dice" id="dice4">
             <img src="dice-5.png" alt="Dice" class="dice" id="dice5">
             <img src="dice-6.png" alt="Dice" class="dice" id="dice6">
-
-
         </div>
         
         <script src="app.js"></script>

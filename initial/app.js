@@ -1,55 +1,110 @@
-/*
-GAME RULES:
-
-- The game has 2 players, playing in rounds
-- In each turn, a player rolls a dice as many times as he whishes. Each result get added to his ROUND score
-- BUT, if the player rolls a 1, all his ROUND score gets lost. After that, it's the next player's turn
-- The player can choose to 'Hold', which means that his ROUND score gets added to his GLBAL score. After that, it's the next player's turn
-- The first player to reach 100 points on GLOBAL score wins the game
-
-*/
-console.log("PLAYING")
-
-const btnDOM = document.querySelector('.btn-roll');
-const evalDOM = document.getElementById('evaluate')
-let dieArr = [];
-let tempScore = 0
-
-function timeout (ms) {
-    return new Promise(res => setTimeout(res,ms));
-}
-
-class state {
-    constructor (diceArray, playerArr) {
-        this.allDiceArr = diceArray;
+/************************************************
+ * Classes
+ *************************************************/
+class State {
+    constructor () {
+        this.allDiceArr = [];
         this.selectedDiceArr = [];
-        this.oldDiceArr = [];
+        this.keptDiceArr = [];
+        this.rollDiceArr = [];
         this.prevScore = 0;
         this.selectedScore = 0;
         this.totalScore = 0;
-        this.playerArr = playerArr;
-        this.currentPlayer = 0;
+        this.playerArr = [];
+        this.currentPlayerIndex = 0;
+        this.currentPlayer;
+        this.hasKept = false;
+        this.prevScoreDOM = document.getElementById('prev-score');
+        this.selectedScoreDOM = document.getElementById('selected-score');
+        this.totalScoreDOM = document.getElementById('round-total');
+    };
+
+    updateSelectedDiceArr() {
+        this.selectedDiceArr = [];
+        this.allDiceArr.forEach(die => {
+            if (die.selected) {
+                this.selectedDiceArr.push(die);
+            };
+        });
+    };
+    updateKeptDiceArr() {
+        this.keptDiceArr = [];
+        this.allDiceArr.forEach(die => {
+            if (die.kept) {
+                this.keptDiceArr.push(die);
+            };
+        });
+    };
+    updateRollDiceArr() {
+        this.rollDiceArr = [];
+        this.allDiceArr.forEach(die => {
+            if (! die.kept && ! die.selected) {
+                this.rollDiceArr.push(die);
+            };
+        });
+    };
+    updateArrays() {
+        this.updateSelectedDiceArr();
+        this.updateKeptDiceArr();
+        this.updateRollDiceArr();
+    };
+    updateCurrentPlayer() {
+        this.currentPlayer = this.playerArr[this.currentPlayerIndex];
+    };
+    updatePrevScoreDOM() {
+        this.prevScoreDOM.textContent = this.prevScore;
+    };
+    updateSelectedScoreDOM() {
+        this.selectedScoreDOM.textContent = this.selectedScore;
+    };
+    updateTotalScoreDOM() {
+        this.totalScoreDOM.textContent = this.totalScore;
+    };
+    resetRoundScores() {
+        this.prevScore = 0;
+        this.selectedScore = 0;
+        this.totalScore = 0;
+        this.updatePrevScoreDOM();
+        this.updateSelectedScoreDOM();
+        this.updateTotalScoreDOM();
     };
 };
 
-class player {
+class Player {
     constructor (index) {
-        this.name = `Player ${index + 1}`;
-        this.abbreviation = `P${index + 1}`;
+        this.index = index;
+        this.name = `Player ${index}`;
+        this.abbreviation = `P${index}`;
         this.score = 0;
+        this.playerNameDom = document.getElementById(`player${index}-name`);
+        this.playerScoreDom = document.getElementById(`player${index}-score`);
     };
+    createPlayerHTML() {
+
+    };
+    updateScoreDom(){
+        this.playerScoreDom.textContent = `Score: ${this.score}`;
+    };
+    updateScore(newScore){
+        this.score += newScore;
+        this.updateScoreDom()
+    };
+    resetScore() {
+        this.score = 0;
+        this.updateScoreDom()
+    };
+
 };
 
-class dieClass {
+class Die {
     constructor (position) {
         this.position = position;
         this.value = position;
         this.dom = document.getElementById(`dice${position}`);
-        this.held = false;
         this.selected = false;
+        this.kept = false;
         this.locked = false;
     };
-    
 
     async roll() {
         let roll;
@@ -64,47 +119,39 @@ class dieClass {
 
             //2. Display the result
             this.dom.style.display = 'block';
-            this.dom.src = 'dice-' + roll + '.png';
+            this.updateDieDOM(roll);
         };
         this.value = roll;
         this.locked = false;
     };
-
-    hold() {
-        this.held = true;
-        this.dom.classList.add('die-hold')
-    }
-
-    unhold() {
-        this.held = false;
-        this.dom.classList.remove('die-hold')
-    }
-}
-
-for (let position = 1; position <= 6; position++) {
-    // create die object
-    let die = new dieClass(position);
-    // create on click event listener for die object
-    die.dom.addEventListener('click', function() {
-        if (die.held) {
-            die.unhold();
-            scoreDice(dieArr, true);
-        } else {
-            die.hold();
-            scoreDice(dieArr, true);
-        }
-    });
-    // push die object to the dieArr array
-    dieArr.push(die)
+    updateDieDOM(roll) {
+        this.dom.src = 'dice-' + roll + '.png';
+    };
+    select() {
+        this.selected = true;
+        this.dom.classList.add('die-select');
+    };
+    deselect() {
+        this.selected = false;
+        this.dom.classList.remove('die-select');
+    };
+    resetDie() {
+        this.deselect();
+        this.value = this.position;
+        this.selected = false;
+        this.kept = false;
+        this.locked = false;
+        this.updateDieDOM(this.value);
+    };
 };
 
-btnDOM.addEventListener('click', function() {
-    dieArr.forEach( (die) => {
-        if (die.held === false) {
-            die.roll()
-        }
-    })
-});
+
+/************************************************
+ * Helper Functions
+ *************************************************/
+function timeout (ms) {
+    return new Promise(res => setTimeout(res,ms));
+}
 
 function getMapKeyByValue(map, searchValue) {
     for (let [key, value] of map.entries()) {
@@ -119,15 +166,18 @@ function setMapBoolean(map, boolean) {
     };
 };
 
-function scoreDice(diceArray, checkForHeld) {
-    let score = 0;
-    let diceHeld = [];
+function scoreDice(diceArray) {
+
+    let results = {
+        score: 0,
+        anyUsable: true,
+        wastedDice: [],
+    }
+    let diceSelected = [];
     let rollVals = [];
     diceArray.forEach(die => {
-        if (die.held === true || ! checkForHeld) {
-            diceHeld.push(die);
-            rollVals.push(die.value);
-        };
+        diceSelected.push(die);
+        rollVals.push(die.value);
     });
     
     let rollFreqMap = new Map([
@@ -167,13 +217,13 @@ function scoreDice(diceArray, checkForHeld) {
 
     // triple doubles
     if (freqFreqVals[1] === 3) {
-        score += 600;
+        results.score += 600;
         allDiceUsed = true;
         setMapBoolean(usedDiceMap, true);
     }
     // large straight
     if (freqFreqVals[0] === 6) {
-        score += 1500;
+        results.score += 1500;
         allDiceUsed = true;
         setMapBoolean(usedDiceMap, true);
     }
@@ -181,43 +231,137 @@ function scoreDice(diceArray, checkForHeld) {
     for (let [key, value] of rollFreqMap.entries()) {
         if (value >= 3) {
             if (key === 1) {
-                score += key * 1000;
+                results.score += key * 1000;
             } else {
-                score += key * 100;
+                results.score += key * 100;
             };
             usedDiceMap.set(key, true);
         };
         if (value >= 4 ) {
-            score *= 2;
+            results.score *= 2;
         };
         if (value >= 5) {
-            score *= 2;
+            results.score *= 2;
         };
         if (value === 6) {
-            score *= 2;
+            results.score *= 2;
         };
     };
     // score ones individually
     if (! usedDiceMap.get(1) && rollFreqMap.get(1)) {
-        score += rollFreqMap.get(1) * 100;
+        results.score += rollFreqMap.get(1) * 100;
         usedDiceMap.set(1, true);
     };
     // score fives individually
     if (! usedDiceMap.get(5) && rollFreqMap.get(5)) {
-        score += rollFreqMap.get(5) * 50;
+        results.score += rollFreqMap.get(5) * 50;
         usedDiceMap.set(5, true);
     };
 
-    console.log(`score=${score}`);
-
-    let anyUsable = false
-    for (let value of usedDiceMap.values()) {
-        if (value) {anyUsable = true}
+    // figure out which dice were unused
+    for (die of diceArray) {
+        if (! usedDiceMap.get(die.value)) {
+            results.wastedDice.push(die)
+        }
     }
-    console.log(`anyUsable=${anyUsable}`)
+    // determine if any dice were usable (for zilch)
+    if (results.wastedDice.length === diceArray.length) {
+        results.anyUsable = false
+    }
+
+    // console.log(results)
+
+    return results
 }
 
-evalDOM.addEventListener('click', function(){
-    scoreDice(dieArr, true);
+function resetGame(state) {
+    // reset player scores
+    state.playerArr.forEach(player =>{
+        player.resetScore();
+    });
+
+    // reset round scores
+    state.resetRoundScores();
+
+    // reset dice
+    state.allDiceArr.forEach(die => die.resetDie())
+
+}
+
+
+/************************************************
+ * Global Variables
+ *************************************************/
+const domObj = {
+    rollBtn: document.getElementById('btn-roll'),
+    holdBtn: document.getElementById('btn-hold'),
+    newGameBtn: document.getElementById('btn-new-game'),
+}
+
+/************************************************
+ * Script Entry Point
+ *************************************************/
+console.log("PLAYING")
+
+// State object (store other objects in here)
+let state = new State()
+
+// Player objects
+for (let i = 1; i <= 4; i++) {
+    // Areate player object
+    let player = new Player(i);
+    // Add event listeners
+
+    // Create players in view
+
+    // Add player to state
+    state.playerArr.push(player)
+}
+
+
+// Dice objects
+for (let position = 1; position <= 6; position++) {
+    // create die object
+    let die = new Die(position);
+    // create on click event listener for die object
+    die.dom.addEventListener('click', function() {
+        if (die.selected) {
+            die.deselect();
+            state.updateArrays();
+            scoreDice(state.selectedDiceArr);
+        } else {
+            die.select();
+            state.updateArrays();
+            scoreDice(state.selectedDiceArr);
+        }
+    });
+    // push die object to the state allDiceArr
+    state.allDiceArr.push(die)
+}
+
+// Roll button object
+domObj.rollBtn.addEventListener('click', function() {
+    // Evaluate score, reject if unused dice
+
+    // Roll dice
+    state.allDiceArr.forEach(die => {
+        if (die.selected === false) {
+            die.roll()
+        }
+    })
 });
+
+// Hold dice button object
+
+
+// Evaluate button object
+domObj.holdBtn.addEventListener('click', function(){
+    scoreDice(state.allDiceArr, true);
+});
+
+// New Game button
+domObj.newGameBtn.addEventListener('click', function() {resetGame(state)})
+
+resetGame(state)
+
 
