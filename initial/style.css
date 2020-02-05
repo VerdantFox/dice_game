@@ -116,7 +116,7 @@ i {
 }
 
 .die-select {
-    border: 2px dashed dodgerblue;
+    border: 3px dashed dodgerblue;
 }
 
 .player {
@@ -148,5 +148,24 @@ i {
     top: 55%;
 }
     
-
+@-webkit-keyframes die-invalid {    
+    from, to {    
+        border: 3px dashed dodgerblue;    
+    }    
+    50% {    
+        border: 3px dashed red;  
+    }    
+}    
+@keyframes die-invalid {    
+    from, to {
+        border: 3px dashed dodgerblue;    
+    }    
+    50% {    
+        border: 3px dashed red;
+    }    
+}
+.die-invalid {    
+    -webkit-animation: die-invalid 1s step-end infinite;    
+    animation: die-invalid 1s step-end infinite;    
+}
 

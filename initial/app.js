@@ -50,23 +50,24 @@ class State {
     };
     updateCurrentPlayer() {
         this.currentPlayer = this.playerArr[this.currentPlayerIndex];
+        // show current player in DOM
     };
-    updatePrevScoreDOM() {
-        this.prevScoreDOM.textContent = this.prevScore;
+    updatePrevScore(score) {
+        this.prevScore = score
+        this.prevScoreDOM.textContent = score;
     };
-    updateSelectedScoreDOM() {
-        this.selectedScoreDOM.textContent = this.selectedScore;
+    updateSelectedScore(score) {
+        this.selectedScore = score
+        this.selectedScoreDOM.textContent = score;
     };
-    updateTotalScoreDOM() {
-        this.totalScoreDOM.textContent = this.totalScore;
+    updateTotalScore(score) {
+        this.totalScore = score
+        this.totalScoreDOM.textContent = score;
     };
     resetRoundScores() {
-        this.prevScore = 0;
-        this.selectedScore = 0;
-        this.totalScore = 0;
-        this.updatePrevScoreDOM();
-        this.updateSelectedScoreDOM();
-        this.updateTotalScoreDOM();
+        this.updatePrevScore(0);
+        this.updateSelectedScore(0);
+        this.updateTotalScore(0);
     };
 };
 
@@ -127,14 +128,44 @@ class Die {
     updateDieDOM(roll) {
         this.dom.src = 'dice-' + roll + '.png';
     };
+    clearBorders() {
+        this.dom.classList.remove('die-select');
+        this.dom.classList.remove('die-invalid');
+    };
+    refreshBorders() {
+        this.clearBorders();
+        if (this.selected) {
+            this.dom.classList.add('die-select');
+        };
+    }
     select() {
         this.selected = true;
+        this.clearBorders();
         this.dom.classList.add('die-select');
     };
     deselect() {
         this.selected = false;
-        this.dom.classList.remove('die-select');
+        this.clearBorders();
     };
+    invalid() {
+        this.selected = true;
+        this.clearBorders();
+        this.dom.classList.add('die-invalid');
+    }
+    updateSelectedBorders() {
+        if (this.selected) {
+            this.clearBorders();
+            this.dom.classList.add('die-select');
+        } else {
+            this.clearBorders();
+        }
+    }
+    moveToKept() {
+        // figure this out
+    };
+    moveToAvailable() {
+        // figure this out
+    }
     resetDie() {
         this.deselect();
         this.value = this.position;
@@ -157,8 +188,8 @@ function getMapKeyByValue(map, searchValue) {
     for (let [key, value] of map.entries()) {
       if (value === searchValue)
         return key;
-    }
-  }
+    };
+  };
 
 function setMapBoolean(map, boolean) {
     for (let key of map.keys()) {
@@ -172,7 +203,8 @@ function scoreDice(diceArray) {
         score: 0,
         anyUsable: true,
         wastedDice: [],
-    }
+    };
+
     let diceSelected = [];
     let rollVals = [];
     diceArray.forEach(die => {
@@ -203,17 +235,17 @@ function scoreDice(diceArray) {
    rollFreqVals.forEach( freq =>{
         if (freq !== 0) {
             freqfreqMap.set(freq, freqfreqMap.get(freq) + 1);
-        }
+        };
     });
-    const freqFreqVals = Array.from(freqfreqMap.values())
+    const freqFreqVals = Array.from(freqfreqMap.values());
 
     // all dice are unused until scored
     let usedDiceMap = new Map();
     for (let [key, value] of rollFreqMap.entries()) {
         if (value !== 0) {
-            usedDiceMap.set(key, false)
-        }
-    }
+            usedDiceMap.set(key, false);
+        };
+    };
 
     // triple doubles
     if (freqFreqVals[1] === 3) {
@@ -261,18 +293,18 @@ function scoreDice(diceArray) {
     // figure out which dice were unused
     for (die of diceArray) {
         if (! usedDiceMap.get(die.value)) {
-            results.wastedDice.push(die)
-        }
-    }
+            results.wastedDice.push(die);
+        };
+    };
     // determine if any dice were usable (for zilch)
     if (results.wastedDice.length === diceArray.length) {
-        results.anyUsable = false
-    }
+        results.anyUsable = false;
+    };
 
     // console.log(results)
 
-    return results
-}
+    return results;
+};
 
 function resetGame(state) {
     // reset player scores
@@ -284,9 +316,19 @@ function resetGame(state) {
     state.resetRoundScores();
 
     // reset dice
-    state.allDiceArr.forEach(die => die.resetDie())
+    state.allDiceArr.forEach(die => die.resetDie());
 
-}
+};
+
+async function updateFromDieSelection() {
+    state.updateArrays();
+    let result = scoreDice(state.selectedDiceArr);
+    state.updateSelectedScore(result.score);
+    console.log(result.wastedDice);
+    state.allDiceArr.forEach(die => die.refreshBorders());
+    await timeout(10); // needed to sync up wasted dice flashing
+    result.wastedDice.forEach(die => die.invalid());
+};
 
 
 /************************************************
@@ -296,15 +338,15 @@ const domObj = {
     rollBtn: document.getElementById('btn-roll'),
     holdBtn: document.getElementById('btn-hold'),
     newGameBtn: document.getElementById('btn-new-game'),
-}
+};
 
 /************************************************
  * Script Entry Point
  *************************************************/
-console.log("PLAYING")
+console.log("PLAYING");
 
 // State object (store other objects in here)
-let state = new State()
+let state = new State();
 
 // Player objects
 for (let i = 1; i <= 4; i++) {
@@ -315,8 +357,8 @@ for (let i = 1; i <= 4; i++) {
     // Create players in view
 
     // Add player to state
-    state.playerArr.push(player)
-}
+    state.playerArr.push(player);
+};
 
 
 // Dice objects
@@ -327,41 +369,44 @@ for (let position = 1; position <= 6; position++) {
     die.dom.addEventListener('click', function() {
         if (die.selected) {
             die.deselect();
-            state.updateArrays();
-            scoreDice(state.selectedDiceArr);
+            updateFromDieSelection();
         } else {
             die.select();
-            state.updateArrays();
-            scoreDice(state.selectedDiceArr);
-        }
+            updateFromDieSelection();
+        };
     });
     // push die object to the state allDiceArr
-    state.allDiceArr.push(die)
-}
+    state.allDiceArr.push(die);
+};
 
 // Roll button object
 domObj.rollBtn.addEventListener('click', function() {
     // Evaluate score, reject if unused dice
+    let result = scoreDice(state.selectedDiceArr);
+    if (result.wastedDice.length !== 0) {
+        result.wastedDice.forEach(die => {
+            die.invalid();
+        });
+        return;
+    };
 
     // Roll dice
-    state.allDiceArr.forEach(die => {
-        if (die.selected === false) {
-            die.roll()
-        }
-    })
+    state.rollDiceArr.forEach(die => {
+        die.roll();
+    });
 });
 
 // Hold dice button object
 
 
 // Evaluate button object
-domObj.holdBtn.addEventListener('click', function(){
-    scoreDice(state.allDiceArr, true);
-});
+// domObj.holdBtn.addEventListener('click', function(){
+//     scoreDice(state.allDiceArr, true);
+// });
 
 // New Game button
-domObj.newGameBtn.addEventListener('click', function() {resetGame(state)})
+domObj.newGameBtn.addEventListener('click', function() {resetGame(state)});
 
-resetGame(state)
+resetGame(state);
 
 
