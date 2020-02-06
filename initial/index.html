@@ -6,11 +6,11 @@
         <link href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css">
         <link type="text/css" rel="stylesheet" href="style.css">
         
-        <title>Pig Game</title>
+        <title>Greed</title>
     </head>
-
+ 
     <body>
-        <div class="players-div">
+        <div class="column players-div">
             <div class="player" id="player1">
                 <h1 id="player1-name">Player 1</h1>
                 <h2 id="player1-score">Score: 450</h2>
@@ -28,11 +28,11 @@
                 <h2 id="player4-score">Score: 750</h2>
             </div>
         </div>
-        <div class="gameplay-div">
+        <div class="column gameplay-div">
             <button id="btn-new-game"><i class="ion-ios-plus-outline"></i>New game</button>
             <button id="btn-roll"><i class="ion-ios-loop"></i>Roll dice</button>
             <button id="btn-hold"><i class="ion-ios-download-outline"></i>Hold</button>
-            <div class="score">
+            <div class="score-div">
                 <table >
                     <tbody">
                         <tr>
@@ -70,7 +70,14 @@
                 <img src="dice-6.png" alt="Dice" class="dice" id="dice6">
                 -->
             </div>
+        </div>
+        <div class="column log-div">
+            <div class="log">
 
+            </div>
+            <div class="settings">
+
+            </div>
         </div>
         
         <script src="app.js"></script>
