@@ -1,155 +1,27 @@
-/**********************************************
-*** GENERAL
-**********************************************/
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    
+/************************************ 
+* Testing (temp)
+*************************************/
+.col {
+    background-color: yellow;
+}
+.row {
+    background-color: pink;
+    margin: 3px;
 }
 
 
-body {
-    /* background-image: linear-gradient(rgba(62, 20, 20, 0.4), rgba(62, 20, 20, 0.4)), url(back.jpg);
-    background-size: cover;
-    background-position: center; */
-    background-color: #E6FFE6;
-    font-family: Lato;
-    font-weight: 300;
-    position: relative;
-    height: 100vh;
-    color: #555;
-}
-
-table {
-    border-collapse: separate;
-    border-spacing: 20px 0;
-    text-align: center;
-  }
-  
-  td {
-    padding: 10px 0;
-  }
-
-
-/**********************************************
-**********************************************/
-button {
-    /* position: absolute; */
-    width: 200px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #555;
-    background: none;
-    border: none;
-    font-family: Lato;
-    font-size: 20px;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-weight: 300;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-button:hover { font-weight: 600; }
-button:hover i { margin-right: 20px; }
-
-button:focus {
-    outline: none;
-}
-
-i {
-    color: #EB4D4D;
-    display: inline-block;
-    margin-right: 15px;
-    font-size: 32px;
-    line-height: 1;
-    vertical-align: text-top;
-    margin-top: -4px;
-    transition: margin 0.3s;
-}
-
-#btn-new-game { top: 50%; }
-#btn-roll { top: 55%; }
-#btn-hold { top: 60%; }
-.score-div {
-    font-size: 24px;
-    font-weight: 600;
-    padding: 20px;
-    transform: translateX(-50%);
-    top: 65%;
-    left: 50%;
-    /* position: absolute; */
-}
-
+/************************************ 
+* Dice
+*************************************/
 .dice {
-    max-width: 100%;
-    height: auto;
-    border: 1px solid #000000;
-    /* position: absolute; */
-    transform: translateX(-50%);
-    height: 100px;
-    /* box-shadow: 0px 10px 60px rgba(0, 0, 0, 0.10); */
+    border: 3px solid #000000;
+    max-height: 100px;
+    align-items: center;
+    margin: 2px;
 }
-
-#dice1 {
-    left: 42%;
-    top: 20%;
-}
-#dice2 {
-    left: 50%;
-    top: 20%;
-}
-#dice3 {
-    left: 58%;
-    top: 20%;
-}
-#dice4 {
-    left: 42%;
-    top: 33%;
-}
-#dice5 {
-    left: 50%;
-    top: 33%;
-}
-#dice6 {
-    left: 58%;
-    top: 33%;
-}
-
 .die-select {
     border: 3px dashed dodgerblue;
 }
-
-.player {
-    display: flex;
-    flex-direction: column;
-    /* position: absolute; */
-    align-items: center;
-    justify-content: center;
-    width: 300px;
-    height: 100px;
-    background-color: greenyellow;
-    border: 1px solid maroon;
-    box-sizing: border-box;
-}
-
-#player1 {
-    top: 10%;
-}
-
-#player2 {
-    top: 25%;
-}
-
-#player3 {
-    top: 40%;
-}
-
-#player4 {
-    top: 55%;
-}
-    
 @-webkit-keyframes die-invalid {    
     from, to {    
         border: 3px dashed dodgerblue;    
@@ -171,22 +43,33 @@ i {
     animation: die-invalid 1s step-end infinite;    
 }
 
-.column {
-    float: left;
-    padding: 10px;
+/************************************ 
+* Buttons
+*************************************/
+button {
+    color: #555;
+    text-transform: uppercase;
+    margin: 5px;
+}
+button i {
+    margin-right: 8px;
+}
+button:hover { font-weight: 600; }
+
+/************************************ 
+* Tables
+*************************************/
+
+.table-borderless td,
+.table-borderless th {
+    border: 0;
 }
 
-.players-div {
-    width: 20%;
-    background-color: red;
+/************************************ 
+* Players
+*************************************/
+.player {
+    border: 3px solid black;
 }
 
-.gameplay-div {
-    width: 60%;
-    background-color: blue;
-}
 
-.log-div {
-    width: 20%;
-    background-color: red;
-}
