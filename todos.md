@@ -7,8 +7,6 @@
 
 ## Javascript
 
-* Move selected dice to "scored dice" before roll
-* Add score to "Round so far" for selected dice before roll
 * Implement hold -> switch to next player
 * Implement move dice back to "Dice in play" on 
 * Implement "Rules" screen

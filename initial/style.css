@@ -1,12 +1,27 @@
 /************************************ 
 * Testing (temp)
 *************************************/
-.col {
+/* .col {
     background-color: yellow;
 }
 .row {
     background-color: pink;
+} */
+
+/************************************ 
+* globals
+*************************************/
+.row {
     margin: 3px;
+}
+.col {
+    margin: 3px;
+}
+.black-border {
+    border: 3px solid black;
+}
+right-border {
+    border-right: 3px solid black;
 }
 
 
@@ -42,6 +57,29 @@
     -webkit-animation: die-invalid 1s step-end infinite;    
     animation: die-invalid 1s step-end infinite;    
 }
+@-webkit-keyframes die-pair {    
+    from, to {    
+        border: 3px solid black;    
+    }    
+    50% {    
+        border: 3px solid green;  
+    }    
+}    
+@keyframes die-pair {    
+    from, to {
+        border: 3px solid black;    
+    }    
+    50% {    
+        border: 3px solid green;
+    }    
+}
+.die-pair {    
+    -webkit-animation: die-pair 1s step-end infinite;    
+    animation: die-pair 1s step-end infinite;    
+}
+.die-zilch {
+    border: 3px solid red;
+}
 
 /************************************ 
 * Buttons
@@ -68,8 +106,9 @@ button:hover { font-weight: 600; }
 /************************************ 
 * Players
 *************************************/
-.player {
-    border: 3px solid black;
+.my-turn {
+    background-color: lightgreen;
+    border: 3px solid green;
 }
 
 
