@@ -298,11 +298,12 @@ function timeout (ms) {
     return new Promise(res => setTimeout(res,ms));
 };
 
-function updateHoldBtnForMinScore(state, domObj) {
+function updateHoldBtn(state, domObj) {
     if (
             (state.currentPlayer.score >= 450 || state.totalScore >= 450)
             && ! state.newPlayer
             && state.selectedScore > 0
+            && state.rollDiceArr.length > 0
         ) {
         domObj.holdBtn.disabled = false;
     } else {
@@ -488,7 +489,7 @@ async function updateFromDieSelection(state, domObj) {
     let result = calcDiceScore(state.selectedDiceArr);
     state.updateSelectedScore(result.score);
     state.updateTotalScore();
-    updateHoldBtnForMinScore(state, domObj);
+    updateHoldBtn(state, domObj);
 
     state.allDiceArr.forEach(die => die.refreshBorders());
     await timeout(10); // needed to sync up wasted dice flashing
@@ -505,16 +506,18 @@ function moveDiceToInPlay(state) {
     });
 };
 
-function scorePepTalk(score, domObj) {
-    if (score >= 1500) {
+function scorePepTalk(score, state, domObj) {
+    if (state.rollDiceArr.length < 3 && score > 0) {
+        domObj.announcement.textContent = pickRandomString(rollComments[4]);
+    } else if (score >= 1500) {
         domObj.announcement.textContent = pickRandomString(rollComments[3]);
     } else if (score >= 1000) {
         domObj.announcement.textContent = pickRandomString(rollComments[2]);
     } else if (score >= 300) {
         domObj.announcement.textContent = pickRandomString(rollComments[1]);
-    } else if (score >= 50) {
+    } else if (score > 0) {
         domObj.announcement.textContent = pickRandomString(rollComments[0]);
-    };
+    }; // else score === zero, don't change announcement
 };
 
 function moveScoredDice(state, domObj) {
@@ -566,7 +569,7 @@ async function rollDice(state, domObj) {
             completionsRemaining--;
             if (completionsRemaining === 0) {
                 result = calcDiceScore(state.rollDiceArr);
-                scorePepTalk(result.score, domObj);
+                scorePepTalk(result.score, state, domObj);
                 if (result.wastedDice.length === 0) {
                     domObj.announcement.textContent = "And rolling!";
                 }
@@ -663,11 +666,18 @@ const lowRollComments = [
     "The next roll will be better, I'm sure...",
     "Oooph. Well at least it wasn't a Zilch!"
 ]
+const rollSaveComments = [
+    "Yes!",
+    "What a nail biter!",
+    "Phew, you did it!",
+    "That was stressful..."
+]
 const rollComments = [
     lowRollComments,
     midRollComments,
     highRollComments,
     insaneRollComments,
+    rollSaveComments,
 ]
 
 /************************************************
