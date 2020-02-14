@@ -14,6 +14,7 @@ class State {
         this.currentPlayerIndex = 0;
         this.currentPlayer;
         this.hasKept = false;
+        this.newPlayer = true;
         this.inPlayRow1Count = 3
         this.inPlayRow2Count = 3
         this.scoredRow1Count = 0
@@ -52,20 +53,26 @@ class State {
         this.updateScoredDiceArr();
         this.updateRollDiceArr();
     };
+    nextPlayer(domObj) {
+        this.currentPlayer.notMyTurn()
+        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.playerArr.length;
+        this.updateCurrentPlayer()
+        domObj.announcement.textContent += ` Your turn ${this.currentPlayer.name}...`
+    }
     updateCurrentPlayer() {
         this.currentPlayer = this.playerArr[this.currentPlayerIndex];
-        // show current player in DOM
+        this.currentPlayer.myTurn();
     };
     updatePrevScore(score) {
-        this.prevScore = score
+        this.prevScore = score;
         this.prevScoreDOM.textContent = score;
     };
     updateSelectedScore(score) {
-        this.selectedScore = score
+        this.selectedScore = score;
         this.selectedScoreDOM.textContent = score;
     };
     updateTotalScore() {
-        this.totalScore = this.selectedScore + this.prevScore
+        this.totalScore = this.selectedScore + this.prevScore;
         this.totalScoreDOM.textContent = this.totalScore;
     };
     resetRoundScores() {
@@ -97,11 +104,13 @@ class Player {
     };
     updateScore(newScore){
         this.score += newScore;
-        this.updateScoreDom()
+        this.updateScoreDom();
     };
-    resetScore() {
+    resetPlayer() {
         this.score = 0;
-        this.updateScoreDom()
+        this.isMyTurn = false;
+        this.updateScoreDom();
+        this.setName();
     };
     myTurn() {
         this.isMyTurn = true;
@@ -119,6 +128,7 @@ class Die {
         this.index = index;
         this.value = index;
         this.dom = document.getElementById(`dice${index}`);
+        this.invalid = false;
         this.selected = false;
         this.scored = false;
         this.zilched = false;
@@ -153,8 +163,7 @@ class Die {
     clearBorders() {
         this.dom.classList.remove('die-select');
         this.dom.classList.remove('die-invalid');
-        this.dom.classList.remove('die-zilch')
-        this.dom.classList.remove('die-pair')
+        this.dom.classList.remove('die-pair');
     };
     refreshBorders() {
         this.clearBorders();
@@ -162,21 +171,48 @@ class Die {
             this.dom.classList.add('die-select');
         };
     }
+    hover() {
+        if (! this.locked) {
+            if (this.invalid) {
+                this.dom.classList.remove('die-invalid');
+            };
+
+            if (! this.selected) {
+                this.dom.classList.add('die-hover-select');
+            } else {
+                this.dom.classList.add('die-hover-deselect');
+            };
+        };
+    };
+    unhover() {
+        if (this.invalid) {
+            this.dom.classList.add('die-invalid');
+        };
+        this.dom.classList.remove('die-hover-select');
+        this.dom.classList.remove('die-hover-deselect');
+    };
     select() {
-        this.selected = true;
-        this.clearBorders();
-        this.dom.classList.add('die-select');
+        if (! this.selected && ! this.locked) {
+            this.selected = true;
+            this.clearBorders();
+            this.dom.classList.add('die-select');
+        };
     };
     deselect() {
-        this.selected = false;
-        this.clearBorders();
+        if (this.selected) {
+            this.selected = false;
+            this.invalid = false;
+            this.clearBorders();
+        };
     };
-    invalid() {
+    invalidate() {
+        this.invalid = true;
         this.selected = true;
         this.clearBorders();
         this.dom.classList.add('die-invalid');
     }
     zilch() {
+        this.locked = true;
         this.selected = false;
         this.zilched = true;
         this.clearBorders();
@@ -187,12 +223,17 @@ class Die {
         this.dom.classList.add('die-pair');
     };
     resetDie() {
-        this.deselect();
         this.value = this.index;
-        this.selected = false;
-        this.scored = false;
         this.locked = false;
+        this.selected = false;
+        this.invalid = false;
+        this.deselect(state, domObj);
         this.updateDieDOM(this.value);
+        if (this.scored) {
+            this.unScore();
+        };
+        this.clearBorders();
+        this.dom.classList.remove('die-zilch');
     };
     score(state, domObj) {
         let newParent;
@@ -215,8 +256,10 @@ class Die {
         }
         this.parentNode = newParent;
 
+        this.locked = true;
         this.scored = true;
         this.selected = false;
+        this.invalid = false;
         this.clearBorders();
     };
     unScore(state, domObj) {
@@ -253,7 +296,19 @@ class Die {
  *************************************************/
 function timeout (ms) {
     return new Promise(res => setTimeout(res,ms));
-}
+};
+
+function updateHoldBtnForMinScore(state, domObj) {
+    if (
+            (state.currentPlayer.score >= 450 || state.totalScore >= 450)
+            && ! state.newPlayer
+            && state.selectedScore > 0
+        ) {
+        domObj.holdBtn.disabled = false;
+    } else {
+        domObj.holdBtn.disabled = true;
+    };
+};
 
 
 function getMapKeyByValue(map, searchValue) {
@@ -269,7 +324,7 @@ function setMapBoolean(map, boolean) {
     };
 };
 
-function scoreDice(diceArray) {
+function calcDiceScore(diceArray) {
 
     const diceCount = diceArray.length
 
@@ -381,12 +436,35 @@ function scoreDice(diceArray) {
     return results;
 };
 
-function resetGame(state) {
-    // reset player scores
-    state.playerArr.forEach(player =>{
-        player.resetScore();
-        player.setName()
+function newDice(state, domObj) {
+
+    // reset round scores
+    state.resetRoundScores();
+
+    moveDiceToInPlay(state);
+    state.updateArrays();
+    state.allDiceArr.forEach(die => {
+        die.resetDie();
+        timeout(10);
+        die.locked = true;
+    });
+
+    // disable "new dice"
+    domObj.newDiceBtn.disabled = true;
+    // disable "hold dice"
+    domObj.holdBtn.disabled = true;
+    // enable "roll dice"
+    domObj.rollBtn.disabled = false;
+
+
+};
+
+function resetGame(state, domObj) {
+    // reset players
+    state.playerArr.forEach(player => {
+        player.resetPlayer();
         if (player.index === 1) {
+            state.currentPlayer = player;
             player.myTurn();
         } else {
             player.notMyTurn();
@@ -396,84 +474,153 @@ function resetGame(state) {
     // reset round scores
     state.resetRoundScores();
 
-    // reset dice
-    state.allDiceArr.forEach(die => die.resetDie());
+    // reset buttons
+    newDice(state, domObj);
+
+    // reset announcement
+    const player1Name = state.playerArr[0].name
+    domObj.announcement.textContent = `New Game! ${player1Name} start!`
 
 };
 
-async function updateFromDieSelection(state) {
+async function updateFromDieSelection(state, domObj) {
     state.updateArrays();
-    let result = scoreDice(state.selectedDiceArr);
+    let result = calcDiceScore(state.selectedDiceArr);
     state.updateSelectedScore(result.score);
     state.updateTotalScore();
+    updateHoldBtnForMinScore(state, domObj);
+
     state.allDiceArr.forEach(die => die.refreshBorders());
     await timeout(10); // needed to sync up wasted dice flashing
-    result.wastedDice.forEach(die => die.invalid());
+    state.allDiceArr.forEach(die => {die.invalid = false});
+    result.wastedDice.forEach(die => die.invalidate());
+    if (result.wastedDice.length === 0 && state.selectedScore > 0) {
+        domObj.rollBtn.disabled = false;
+    };
 };
 
 function moveDiceToInPlay(state) {
     state.scoredDiceArr.forEach(die => {
-        die.unScore(state, domObj)
-    })
+        die.unScore(state, domObj);
+    });
+};
+
+function scorePepTalk(score, domObj) {
+    if (score >= 1500) {
+        domObj.announcement.textContent = pickRandomString(rollComments[3]);
+    } else if (score >= 1000) {
+        domObj.announcement.textContent = pickRandomString(rollComments[2]);
+    } else if (score >= 300) {
+        domObj.announcement.textContent = pickRandomString(rollComments[1]);
+    } else if (score >= 50) {
+        domObj.announcement.textContent = pickRandomString(rollComments[0]);
+    };
+};
+
+function moveScoredDice(state, domObj) {
+    // Transfer "Selected" score to "Round so far" score
+    state.updatePrevScore(state.totalScore);
+    state.updateSelectedScore(0)
+    state.updateTotalScore();
+
+    // move scored dice
+    state.selectedDiceArr.forEach(die => {
+        dieValue = die.score(state, domObj);
+    });
+
+    state.updateArrays();
+    // Move dice to in play area if scored is full
+    if (state.scoredDiceArr.length === 6) {
+        domObj.announcement.textContent = "And rolling!"
+        moveDiceToInPlay(state);
+        state.updateArrays();
+        rollDice(state, domObj);
+    };
 }
 
-async function rollDice(state) {
+async function rollDice(state, domObj) {
     return new Promise(resolve => {
         // Evaluate score, reject if unused dice
-        let result = scoreDice(state.selectedDiceArr);
+        let result = calcDiceScore(state.selectedDiceArr);
         if (result.wastedDice.length !== 0) {
             result.wastedDice.forEach(die => {
-                die.invalid();
+                die.invalidate();
             });
-            resolve();
+            return;
         };
+        moveScoredDice(state, domObj);
 
-        // Transfer "Selected" score to "Round so far" score
-        state.updatePrevScore(state.totalScore);
-        state.updateSelectedScore(0)
-        state.updateTotalScore();
+        // disable all dice related buttons
+        domObj.holdBtn.disabled = true;
+        domObj.rollBtn.disabled = true;
+        domObj.newDiceBtn.disabled = true;
+        // Allow hold, since player has rolled once
+        state.newPlayer = false;
 
-        // move scored dice
-        state.selectedDiceArr.forEach(die => {
-            dieValue = die.score(state, domObj);
-        });
-
-        state.updateArrays();
-        // Move dice to in play area if scored is full
-        if (state.scoredDiceArr.length === 6) {
-            moveDiceToInPlay(state);
-            state.updateArrays();
-            rollDice(state);
-        };
-
-        // Roll dice unscored dice
+        // Roll unscored dice
         // Must resolve promise after last for loop awaited
         let completionsRemaining = state.rollDiceArr.length
         state.rollDiceArr.forEach(async die => {
             die.clearBorders();
             const value = await die.roll();
-            completionsRemaining--
+            completionsRemaining--;
             if (completionsRemaining === 0) {
-                result = scoreDice(state.rollDiceArr);
-                console.log(result);
+                result = calcDiceScore(state.rollDiceArr);
+                scorePepTalk(result.score, domObj);
+                if (result.wastedDice.length === 0) {
+                    domObj.announcement.textContent = "And rolling!";
+                }
                 if (! result.anyUsable && result.isPair) {
-                    state.rollDiceArr.forEach(die => {
-                        die.pair();
-                        resolve();
-                    });
+                    domObj.rollBtn.disabled = false;
+                    state.rollDiceArr.forEach(die => die.pair());
+                    domObj.announcement.textContent = `Ooo... a pair. Staying alive...`;
                 };
-                console.log(state.rollDiceArr);
                 if (! result.anyUsable && ! result.isPair) {
-                    state.rollDiceArr.forEach(die => {
-                        die.zilch();
-                        resolve();
-                    });
+                    // prevent new player from holding
+                    state.newPlayer = true;
+                    state.rollDiceArr.forEach(die => die.zilch());
+                    domObj.announcement.textContent = `Zilch!!!`;
+                    domObj.holdBtn.disabled = true;
+                    domObj.rollBtn.disabled = true;
+                    domObj.newDiceBtn.disabled = false;
+                    state.nextPlayer(domObj);
                 };
                 resolve();
             };
         });
     });
 };
+
+async function holdDice(state, domObj) {
+    // Evaluate score, reject if unused dice
+    let result = calcDiceScore(state.selectedDiceArr);
+    if (result.wastedDice.length !== 0) {
+        result.wastedDice.forEach(die => {
+            die.invalidate();
+        });
+        return;
+    };
+    // prevent new player from holding
+    state.newPlayer = true;
+    // move scored dice to scored area
+    moveScoredDice(state, domObj);
+    // lock all roll-dice 
+    state.rollDiceArr.forEach(die => {
+        die.locked = true;
+    })
+
+    state.currentPlayer.updateScore(state.totalScore);
+    domObj.announcement.textContent = `${state.currentPlayer.name} scored ${state.totalScore} points. `;
+    state.nextPlayer(domObj);
+    domObj.newDiceBtn.disabled = false;
+    domObj.rollBtn.disabled = false;
+    domObj.holdBtn.disabled = true;
+};
+
+function pickRandomString(array) {
+    const index = Math.floor(Math.random() * array.length);
+    return array[index]
+}
 
 
 /************************************************
@@ -483,18 +630,49 @@ const domObj = {
     rollBtn: document.getElementById('btn-roll'),
     holdBtn: document.getElementById('btn-hold'),
     newGameBtn: document.getElementById('btn-new-game'),
-    newDiceBtn: document.getElementById('btn-new-game'),
+    newDiceBtn: document.getElementById('btn-new-dice'),
     dieInPlayRow1: document.getElementById('in-play-row-1'),
     dieInPlayRow2: document.getElementById('in-play-row-2'),
     dieScoredRow1: document.getElementById('scored-row-1'),
     dieScoredRow2: document.getElementById('scored-row-2'),
+    announcement: document.getElementById('announcement'),
 };
+
+const insaneRollComments = [
+    "Omg, that roll was insane!",
+    "What?? That rolle was nuts!",
+    "Your power level... it's over 9000!",
+]
+const highRollComments = [
+    "Nice roll!",
+    "Daaaaamn, now that's a roll!",
+    "Some people get all the luck...",
+    "Wow, what a roll!",
+    "Oh baby! Nice roll!"
+]
+const midRollComments = [
+    "Respectable roll.",
+    "Ehh... I mean, it's alright...",
+    "Not bad...",
+    "Decent roll."
+]
+const lowRollComments = [
+    "Slowly but surely...",
+    "Keeping things moving...",
+    "Still in the game...",
+    "The next roll will be better, I'm sure...",
+    "Oooph. Well at least it wasn't a Zilch!"
+]
+const rollComments = [
+    lowRollComments,
+    midRollComments,
+    highRollComments,
+    insaneRollComments,
+]
 
 /************************************************
  * Script Entry Point
  *************************************************/
-console.log("PLAYING");
-
 // State object (store other objects in here)
 let state = new State();
 
@@ -520,15 +698,23 @@ for (let index = 1; index <= 6; index++) {
     } else {
         die = new Die(index, domObj.dieInPlayRow2);
     }
-    // create on click event listener for die object
+    // create on CLICK event listener for die object
     die.dom.addEventListener('click', function() {
         if (die.selected) {
-            die.deselect();
+            die.deselect(state, domObj);
         } else {
-            die.select();
+            die.select(state, domObj);
         };
-        updateFromDieSelection(state);
-
+        updateFromDieSelection(state, domObj);
+    });
+    // create on HOVER event listener for die object
+    die.dom.addEventListener('pointerenter', async function() {
+        updateFromDieSelection(state, domObj);
+        die.hover();
+    });
+    die.dom.addEventListener('pointerout', function() {
+        updateFromDieSelection(state, domObj);
+        die.unhover();
     });
     // push die object to the state allDiceArr
     state.allDiceArr.push(die);
@@ -536,23 +722,26 @@ for (let index = 1; index <= 6; index++) {
 
 // Roll button object
 domObj.rollBtn.addEventListener('click', async function() {
-    const result = await rollDice(state);
+    const result = await rollDice(state, domObj);
 });
+
+// New dice button object
+domObj.newDiceBtn.addEventListener('click', function() {
+    newDice(state, domObj);
+});
+
 
 // Hold dice button object
 domObj.holdBtn.addEventListener('click', function(){
-    let result = scoreDice(state.selectedDiceArr);
-    if (result.wastedDice.length !== 0) {
-        result.wastedDice.forEach(die => {
-            die.invalid();
-        });
-        return;
-    };
+    holdDice(state, domObj);
 });
 
 // New Game button
-domObj.newGameBtn.addEventListener('click', function() {resetGame(state)});
+domObj.newGameBtn.addEventListener('click', function() {
+    resetGame(state, domObj);
+});
 
-resetGame(state);
+
+resetGame(state, domObj);
 
 

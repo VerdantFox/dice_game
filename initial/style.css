@@ -80,6 +80,12 @@ right-border {
 .die-zilch {
     border: 3px solid red;
 }
+.die-hover-select {
+    border: 3px solid dodgerblue;
+}
+.die-hover-deselect {
+    border: 3px dashed black;
+}
 
 /************************************ 
 * Buttons
@@ -92,7 +98,9 @@ button {
 button i {
     margin-right: 8px;
 }
-button:hover { font-weight: 600; }
+.btn {
+    font-weight: 700;
+}
 
 /************************************ 
 * Tables
