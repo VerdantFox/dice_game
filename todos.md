@@ -7,9 +7,11 @@
 
 ## Javascript
 
-* Implement hold -> switch to next player
-* Implement move dice back to "Dice in play" on 
 * Implement "Rules" screen
 * Implement "Full score history" screen
 * Implement "Game log"
+* Implement win condition
+* Implement Change players names live
+* Implement Settings (Some settings require new game)
+* Implement Sound
 

@@ -118,5 +118,10 @@ button i {
     background-color: lightgreen;
     border: 3px solid green;
 }
-
+.popup-green {
+    color: green;
+}
+.popup-red {
+    color: red;
+}
 

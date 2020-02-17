@@ -92,6 +92,7 @@ class Player {
         this.playerDom = document.getElementById(`player${index}`);
         this.playerNameDom = document.getElementById(`player${index}-name`);
         this.playerScoreDom = document.getElementById(`player${index}-score`);
+        this.playerPopupDom = document.getElementById(`player${index}-popup`);
     };
     setName() {
         this.playerNameDom.textContent = this.name;
@@ -101,6 +102,30 @@ class Player {
     };
     updateScoreDom(){
         this.playerScoreDom.textContent = `Score: ${this.score}`;
+    };
+    updatePopupDom(text){
+        this.playerPopupDom.textContent = '&nbsp;';
+        let positive = true;
+        if (isNaN(text)) {
+            text = ` ${text}`;
+            positive = false;
+        } else if (text === 0 ) {
+            text = '';
+        } else {
+            text = ` +${text.toLocaleString()}`;
+        };
+        if (positive) {
+            this.playerPopupDom.classList.remove('popup-red');
+            if (! this.playerPopupDom.classList.contains('popup-green')) {
+                this.playerPopupDom.classList.add('popup-green');
+            };
+        } else {
+            this.playerPopupDom.classList.remove('popup-green');
+            if (! this.playerPopupDom.classList.contains('popup-red')) {
+                this.playerPopupDom.classList.add('popup-red');
+            };
+        };
+        this.playerPopupDom.textContent = text;
     };
     updateScore(newScore){
         this.score += newScore;
@@ -603,6 +628,10 @@ async function holdDice(state, domObj) {
         });
         return;
     };
+    // Eisable buttons during calculations
+    domObj.newDiceBtn.disabled = true;
+    domObj.rollBtn.disabled = true;
+    domObj.holdBtn.disabled = true;
     // prevent new player from holding
     state.newPlayer = true;
     // move scored dice to scored area
@@ -611,13 +640,22 @@ async function holdDice(state, domObj) {
     state.rollDiceArr.forEach(die => {
         die.locked = true;
     })
-
-    state.currentPlayer.updateScore(state.totalScore);
+    // Update player score incrementally
+    let popupScore = state.totalScore;
+    state.currentPlayer.updatePopupDom(popupScore);
+    await timeout(500);
+    for (let i = popupScore; i >= 0; i -= 50) {
+        state.currentPlayer.updatePopupDom(i);
+        await timeout(50);
+        if (i > 0) {
+            state.currentPlayer.updateScore(50);
+        }
+    };
     domObj.announcement.textContent = `${state.currentPlayer.name} scored ${state.totalScore} points. `;
     state.nextPlayer(domObj);
+    // Enable correct buttons
     domObj.newDiceBtn.disabled = false;
     domObj.rollBtn.disabled = false;
-    domObj.holdBtn.disabled = true;
 };
 
 function pickRandomString(array) {
