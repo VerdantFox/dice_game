@@ -94,6 +94,9 @@ class Player {
         this.playerScoreDom = document.getElementById(`player${index}-score`);
         this.playerPopupDom = document.getElementById(`player${index}-popup`);
     };
+    updatePlayerName() {
+        this.name = this.playerNameDom.textContent;
+    }
     setName() {
         this.playerNameDom.textContent = this.name;
     };
@@ -611,6 +614,9 @@ async function rollDice(state, domObj) {
                     domObj.holdBtn.disabled = true;
                     domObj.rollBtn.disabled = true;
                     domObj.newDiceBtn.disabled = false;
+                    state.currentPlayer.updatePopupDom("Zilch!");
+                    await timeout(1000);
+                    state.currentPlayer.updatePopupDom(0);
                     state.nextPlayer(domObj);
                 };
                 resolve();
@@ -731,6 +737,13 @@ for (let i = 1; i <= 4; i++) {
     // Add event listeners
 
     // Create players in view
+
+    // Make name editable
+    player.playerNameDom.contentEditable = true;
+    player.playerNameDom.spellcheck = false;
+    player.playerNameDom.addEventListener('input', function() {
+        player.updatePlayerName();
+    });
 
     // Add player to state
     state.playerArr.push(player);
